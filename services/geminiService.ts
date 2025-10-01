@@ -39,7 +39,12 @@ export const generateImage = async (prompt: string): Promise<string> => {
             aspectRatio: '1:1',
         },
     });
-    return response.generatedImages[0].image.imageBytes;
+    
+    const imageBytes = response.generatedImages?.[0]?.image?.imageBytes;
+    if (!imageBytes) {
+        throw new Error("Image generation failed to return an image.");
+    }
+    return imageBytes;
 };
 
 export const editImage = async (prompt: string, image: { data: string; mimeType: string }): Promise<string> => {
@@ -63,10 +68,9 @@ export const editImage = async (prompt: string, image: { data: string; mimeType:
         },
     });
 
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            return part.inlineData.data;
-        }
+    const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (imagePart?.inlineData) {
+        return imagePart.inlineData.data;
     }
 
     throw new Error("No image was generated in the response.");

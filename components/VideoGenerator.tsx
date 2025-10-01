@@ -18,12 +18,22 @@ export const VideoGenerator: React.FC = () => {
     const pollIntervalRef = useRef<number | null>(null);
     const messageIntervalRef = useRef<number | null>(null);
 
+    // Effect for cleaning up intervals on unmount
     useEffect(() => {
         return () => {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             if (messageIntervalRef.current) clearInterval(messageIntervalRef.current);
         };
     }, []);
+
+    // Effect for cleaning up blob URLs to prevent memory leaks
+    useEffect(() => {
+        return () => {
+            if (videoUrl && videoUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(videoUrl);
+            }
+        };
+    }, [videoUrl]);
     
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -92,10 +102,24 @@ export const VideoGenerator: React.FC = () => {
 
                         const uri = operation.response?.generatedVideos?.[0]?.video?.uri;
                         if (uri && process.env.API_KEY) {
-                            setVideoUrl(`${uri}&key=${process.env.API_KEY}`);
-                            setLoadingState('done');
+                            try {
+                                const videoResponse = await fetch(`${uri}&key=${process.env.API_KEY}`);
+                                if (!videoResponse.ok) {
+                                    throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
+                                }
+                                const videoBlob = await videoResponse.blob();
+                                const objectURL = URL.createObjectURL(videoBlob);
+                                setVideoUrl(objectURL);
+                                setLoadingState('done');
+                            } catch (fetchError: any) {
+                                console.error('Video fetch error:', fetchError);
+                                setError(fetchError.message || 'Failed to download generated video.');
+                                setLoadingState('error');
+                            }
                         } else {
-                            throw new Error(operation.error?.message || 'Video URI not found in response.');
+                           const errorMessage = operation.error?.message || 'Video generation finished but no video URI was found.';
+                           setError(errorMessage);
+                           setLoadingState('error');
                         }
                     }
                 } catch (pollError: any) {
