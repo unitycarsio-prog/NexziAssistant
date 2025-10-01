@@ -1,0 +1,7 @@
+{
+  "name": "NexziAssistant",
+  "description": "An advanced AI assistant with capabilities for chat, coding, image generation, video generation, and real-time voice conversations in English and Hindi. Created by Shashwat Ranjan Jha.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
