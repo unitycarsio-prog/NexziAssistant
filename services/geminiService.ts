@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Chat, GenerateContentResponse, Modality } from "@google/genai";
 import { SYSTEM_PROMPT } from '../constants';
 
 const API_KEY = process.env.API_KEY;
@@ -43,16 +42,60 @@ export const generateImage = async (prompt: string): Promise<string> => {
     return response.generatedImages[0].image.imageBytes;
 };
 
+export const editImage = async (prompt: string, image: { data: string; mimeType: string }): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: {
+            parts: [
+                {
+                    inlineData: {
+                        data: image.data,
+                        mimeType: image.mimeType,
+                    },
+                },
+                {
+                    text: prompt,
+                },
+            ],
+        },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            return part.inlineData.data;
+        }
+    }
+
+    throw new Error("No image was generated in the response.");
+};
+
 
 // Fix: The return type of generateVideos is not an exported member. Using `any` for the operation object.
-export const generateVideo = async (prompt: string): Promise<any> => {
-    let operation = await ai.models.generateVideos({
+export const generateVideo = async (prompt: string, image?: { data: string; mimeType: string }): Promise<any> => {
+    const params: {
+        model: string;
+        prompt: string;
+        image?: { imageBytes: string; mimeType: string };
+        config: { numberOfVideos: number };
+    } = {
         model: 'veo-2.0-generate-001',
         prompt: prompt,
         config: {
             numberOfVideos: 1,
         }
-    });
+    };
+
+    if (image) {
+        params.image = {
+            imageBytes: image.data,
+            mimeType: image.mimeType,
+        };
+    }
+
+    let operation = await ai.models.generateVideos(params);
     return operation;
 }
 

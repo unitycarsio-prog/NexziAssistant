@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { generateVideo, pollVideo } from '../services/geminiService';
 import { Spinner } from './Spinner';
-import { VideoIcon } from './icons/Icons';
+import { VideoIcon, UploadIcon, CloseIcon } from './icons/Icons';
 import { VIDEO_LOADING_MESSAGES } from '../constants';
-// Fix: Removed unused and non-exported type VideosOperationResponse from '@google/genai'.
 
 type LoadingState = 'idle' | 'generating' | 'polling' | 'done' | 'error';
 
@@ -14,6 +12,8 @@ export const VideoGenerator: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [loadingMessage, setLoadingMessage] = useState(VIDEO_LOADING_MESSAGES[0]);
+    const [uploadedImage, setUploadedImage] = useState<{ dataUrl: string; file: File } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const pollIntervalRef = useRef<number | null>(null);
     const messageIntervalRef = useRef<number | null>(null);
@@ -24,9 +24,30 @@ export const VideoGenerator: React.FC = () => {
             if (messageIntervalRef.current) clearInterval(messageIntervalRef.current);
         };
     }, []);
+    
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setUploadedImage({ dataUrl: reader.result as string, file });
+                setVideoUrl(null); // Clear previous generation
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeUploadedImage = () => {
+        setUploadedImage(null);
+        if(fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    }
+
 
     const startLoadingMessages = () => {
         let i = 0;
+        setLoadingMessage(VIDEO_LOADING_MESSAGES[0]);
         messageIntervalRef.current = window.setInterval(() => {
             i = (i + 1) % VIDEO_LOADING_MESSAGES.length;
             setLoadingMessage(VIDEO_LOADING_MESSAGES[i]);
@@ -34,7 +55,10 @@ export const VideoGenerator: React.FC = () => {
     };
 
     const stopLoadingMessages = () => {
-        if (messageIntervalRef.current) clearInterval(messageIntervalRef.current);
+        if (messageIntervalRef.current) {
+            clearInterval(messageIntervalRef.current);
+            messageIntervalRef.current = null;
+        }
     };
 
     const handleGenerate = async () => {
@@ -48,12 +72,19 @@ export const VideoGenerator: React.FC = () => {
         startLoadingMessages();
 
         try {
-            const initialOperation = await generateVideo(prompt);
+            let initialOperation;
+            if (uploadedImage) {
+                const base64Data = uploadedImage.dataUrl.split(',')[1];
+                const mimeType = uploadedImage.file.type;
+                initialOperation = await generateVideo(prompt, { data: base64Data, mimeType });
+            } else {
+                initialOperation = await generateVideo(prompt);
+            }
+            
             setLoadingState('polling');
             
             pollIntervalRef.current = window.setInterval(async () => {
                 try {
-                    // Fix: The type of the video operation object is not an exported member. Using `any`.
                     const operation: any = await pollVideo(initialOperation);
                     if (operation.done) {
                         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -64,21 +95,21 @@ export const VideoGenerator: React.FC = () => {
                             setVideoUrl(`${uri}&key=${process.env.API_KEY}`);
                             setLoadingState('done');
                         } else {
-                            throw new Error('Video URI not found in response.');
+                            throw new Error(operation.error?.message || 'Video URI not found in response.');
                         }
                     }
-                } catch (pollError) {
+                } catch (pollError: any) {
                     console.error('Polling error:', pollError);
-                    setError('An error occurred while checking video status.');
+                    setError(pollError.message || 'An error occurred while checking video status.');
                     setLoadingState('error');
                     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                     stopLoadingMessages();
                 }
             }, 10000);
 
-        } catch (e) {
+        } catch (e: any) {
             console.error('Error generating video:', e);
-            setError('Failed to start video generation. Please try again.');
+            setError(e.message || 'Failed to start video generation. Please try again.');
             setLoadingState('error');
             stopLoadingMessages();
         }
@@ -95,7 +126,7 @@ export const VideoGenerator: React.FC = () => {
                         type="text"
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="e.g., A neon hologram of a cat driving"
+                        placeholder={uploadedImage ? "e.g., Make the cat drive a car" : "e.g., A neon hologram of a cat"}
                         className="flex-grow px-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         disabled={isLoading}
                     />
@@ -107,15 +138,43 @@ export const VideoGenerator: React.FC = () => {
                         {isLoading ? <><Spinner /> Generating...</> : 'Generate'}
                     </button>
                 </div>
+                 <div className="text-center mt-4">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        className="hidden" 
+                        accept="image/*" 
+                        disabled={isLoading}
+                    />
+                    <button 
+                        onClick={() => fileInputRef.current?.click()} 
+                        disabled={isLoading} 
+                        className="text-blue-600 hover:text-blue-800 font-medium disabled:text-slate-400 flex items-center justify-center mx-auto"
+                    >
+                      <UploadIcon /> {uploadedImage ? 'Change Image' : 'Upload Image to Animate'}
+                    </button>
+                </div>
                 {error && <p className="text-red-500 text-center mt-4">{error}</p>}
-                <div className="mt-8 w-full aspect-video bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300">
+                <div className="mt-6 w-full aspect-video bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden">
                     {isLoading ? (
-                        <div className="text-center">
+                        <div className="text-center p-4">
                             <Spinner size="lg"/>
                             <p className="mt-2 text-slate-600">{loadingMessage}</p>
                         </div>
                     ) : videoUrl ? (
-                         <video src={videoUrl} controls autoPlay className="w-full h-full rounded-md"></video>
+                         <video src={videoUrl} controls autoPlay muted loop className="w-full h-full object-contain"></video>
+                    ) : uploadedImage ? (
+                        <div className="relative w-full h-full">
+                            <img src={uploadedImage.dataUrl} alt="Uploaded preview" className="object-contain w-full h-full" />
+                            <button 
+                                onClick={removeUploadedImage} 
+                                className="absolute top-2 right-2 p-1.5 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75"
+                                aria-label="Remove uploaded image"
+                            >
+                                <CloseIcon className="w-5 h-5" />
+                            </button>
+                        </div>
                     ) : (
                         <div className="text-center text-slate-500">
                             <VideoIcon className="mx-auto" />
