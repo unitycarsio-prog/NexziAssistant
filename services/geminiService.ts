@@ -3,16 +3,27 @@ import { SYSTEM_PROMPT } from '../constants';
 
 const API_KEY = process.env.API_KEY;
 
-if (!API_KEY) {
-    throw new Error("API_KEY environment variable not set");
+let ai: GoogleGenAI | null = null;
+if (API_KEY) {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+export const isApiKeySet = (): boolean => {
+    return !!API_KEY;
+}
+
+const getAi = (): GoogleGenAI => {
+    if (!ai) {
+        throw new Error("Gemini AI not initialized. API key is missing.");
+    }
+    return ai;
+}
+
 
 let chat: Chat | null = null;
 
 export const startChat = () => {
-    chat = ai.chats.create({
+    chat = getAi().chats.create({
         model: 'gemini-2.5-flash',
         config: {
             systemInstruction: SYSTEM_PROMPT,
@@ -24,13 +35,13 @@ export const generateText = async (prompt: string): Promise<GenerateContentRespo
     if (!chat) {
         startChat();
     }
-    if (!chat) throw new Error("Chat not initialized"); // Should not happen
+    if (!chat) throw new Error("Chat not initialized"); // Should not happen if API key is set
     
     return await chat.sendMessage({ message: prompt });
 };
 
 export const generateImage = async (prompt: string): Promise<string> => {
-    const response = await ai.models.generateImages({
+    const response = await getAi().models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: prompt,
         config: {
@@ -48,7 +59,7 @@ export const generateImage = async (prompt: string): Promise<string> => {
 };
 
 export const editImage = async (prompt: string, image: { data: string; mimeType: string }): Promise<string> => {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
         contents: {
             parts: [
@@ -99,11 +110,11 @@ export const generateVideo = async (prompt: string, image?: { data: string; mime
         };
     }
 
-    let operation = await ai.models.generateVideos(params);
+    let operation = await getAi().models.generateVideos(params);
     return operation;
 }
 
 // Fix: The type of the video operation object is not an exported member. Using `any`.
 export const pollVideo = async (operation: any): Promise<any> => {
-    return await ai.operations.getVideosOperation({ operation: operation });
+    return await getAi().operations.getVideosOperation({ operation: operation });
 }
