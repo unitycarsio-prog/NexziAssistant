@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { generateImage, editImage } from '../services/geminiService';
 import { Spinner } from './Spinner';
@@ -58,8 +59,8 @@ export const ImageGenerator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center flex-grow w-full max-w-3xl mx-auto">
-      <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+    <div className="flex flex-col items-center justify-center flex-grow w-full">
+      <div className="w-full max-w-7xl bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Image Generation &amp; Editing</h2>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
@@ -123,6 +124,9 @@ export const ImageGenerator: React.FC = () => {
             </div>
           )}
         </div>
+        <p className="text-xs text-slate-400 text-center mt-2">
+            Generated images may contain a small logo as part of the service.
+        </p>
       </div>
     </div>
   );

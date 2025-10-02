@@ -87,34 +87,26 @@ export const editImage = async (prompt: string, image: { data: string; mimeType:
     throw new Error("No image was generated in the response.");
 };
 
-
-// Fix: The return type of generateVideos is not an exported member. Using `any` for the operation object.
+// Fix: Add generateVideo function for video generation.
 export const generateVideo = async (prompt: string, image?: { data: string; mimeType: string }): Promise<any> => {
-    const params: {
-        model: string;
-        prompt: string;
-        image?: { imageBytes: string; mimeType: string };
-        config: { numberOfVideos: number };
-    } = {
+    const ai = getAi();
+    const request: any = {
         model: 'veo-2.0-generate-001',
         prompt: prompt,
         config: {
             numberOfVideos: 1,
-        }
+        },
     };
-
     if (image) {
-        params.image = {
+        request.image = {
             imageBytes: image.data,
             mimeType: image.mimeType,
         };
     }
+    return await ai.models.generateVideos(request);
+};
 
-    let operation = await getAi().models.generateVideos(params);
-    return operation;
-}
-
-// Fix: The type of the video operation object is not an exported member. Using `any`.
+// Fix: Add pollVideo function to check the status of video generation.
 export const pollVideo = async (operation: any): Promise<any> => {
-    return await getAi().operations.getVideosOperation({ operation: operation });
-}
+    return await getAi().operations.getVideosOperation({ operation });
+};

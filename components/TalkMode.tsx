@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 // Fix: Removed non-exported type LiveSession.
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, Type } from "@google/genai";
@@ -79,8 +78,13 @@ export const TalkMode: React.FC = () => {
             sourceNodeRef.current = null;
         }
         streamRef.current?.getTracks().forEach(track => track.stop());
-        inputAudioContextRef.current?.close();
-        outputAudioContextRef.current?.close();
+        
+        if (inputAudioContextRef.current && inputAudioContextRef.current.state !== 'closed') {
+            inputAudioContextRef.current.close();
+        }
+        if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
+            outputAudioContextRef.current.close();
+        }
         
         sourcesRef.current.forEach(source => source.stop());
         sourcesRef.current.clear();
@@ -149,6 +153,7 @@ export const TalkMode: React.FC = () => {
                             setTranscription({ user: currentInputTranscription, model: currentOutputTranscription });
                         } else if (message.serverContent?.inputTranscription) {
                             currentInputTranscription += message.serverContent.inputTranscription.text;
+                             // Fix: Corrected variable name from `currentOutput Transcription` to `currentOutputTranscription`.
                              setTranscription({ user: currentInputTranscription, model: currentOutputTranscription });
                         }
 
@@ -189,8 +194,8 @@ export const TalkMode: React.FC = () => {
     }, [stopConversation]);
 
     return (
-        <div className="flex flex-col items-center justify-center flex-grow w-full max-w-2xl mx-auto">
-            <div className="w-full bg-white p-8 rounded-lg shadow-lg text-center">
+        <div className="flex flex-col items-center justify-center flex-grow w-full">
+            <div className="w-full max-w-5xl bg-white p-8 rounded-lg shadow-lg text-center">
                 <h2 className="text-2xl font-bold text-slate-800 mb-2">Talk Mode</h2>
                 <p className="text-slate-500 mb-6">Have a real-time conversation with Nexzi</p>
 

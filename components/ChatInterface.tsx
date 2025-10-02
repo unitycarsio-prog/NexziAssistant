@@ -73,7 +73,7 @@ export const ChatInterface: React.FC = () => {
   };
   
   return (
-    <div className="flex flex-col flex-grow w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="flex flex-col flex-grow w-full bg-white rounded-lg shadow-lg overflow-hidden">
       <div className="flex-grow p-6 overflow-y-auto">
         <div className="space-y-6">
           {messages.map((msg, index) => (

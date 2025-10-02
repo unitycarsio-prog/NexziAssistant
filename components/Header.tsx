@@ -1,7 +1,7 @@
 
 import React from 'react';
 import type { AppMode } from '../types';
-import { ChatIcon, ImageIcon, VideoIcon, MicIcon } from './icons/Icons';
+import { ChatIcon, ImageIcon, MicIcon } from './icons/Icons';
 
 interface HeaderProps {
   activeMode: AppMode;
@@ -9,11 +9,9 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeMode, setActiveMode }) => {
-  // Fix: Replaced JSX.Element with React.ReactElement to resolve namespace issue.
   const navItems: { mode: AppMode; label: string; icon: React.ReactElement }[] = [
     { mode: 'chat', label: 'Chat', icon: <ChatIcon /> },
     { mode: 'image', label: 'Image Gen', icon: <ImageIcon /> },
-    { mode: 'video', label: 'Video Gen', icon: <VideoIcon /> },
     { mode: 'talk', label: 'Talk Mode', icon: <MicIcon /> },
   ];
 

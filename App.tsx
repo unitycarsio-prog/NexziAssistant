@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { ChatInterface } from './components/ChatInterface';
 import { ImageGenerator } from './components/ImageGenerator';
-import { VideoGenerator } from './components/VideoGenerator';
 import { TalkMode } from './components/TalkMode';
 import type { AppMode } from './types';
 import { isApiKeySet } from './services/geminiService';
@@ -35,8 +34,6 @@ const App: React.FC = () => {
         return <ChatInterface />;
       case 'image':
         return <ImageGenerator />;
-      case 'video':
-        return <VideoGenerator />;
       case 'talk':
         return <TalkMode />;
       default:
@@ -47,7 +44,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
       <Header activeMode={mode} setActiveMode={setMode} />
-      <main className="flex-grow container mx-auto p-4 flex flex-col">
+      <main className="flex-grow p-4 flex flex-col">
         {renderContent()}
       </main>
       <footer className="text-center p-4 text-slate-500 text-sm">
