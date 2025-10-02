@@ -1,5 +1,5 @@
 
-export type AppMode = 'chat' | 'image' | 'talk';
+export type AppMode = 'chat' | 'image' | 'video' | 'talk';
 
 export interface MessagePart {
     text: string;

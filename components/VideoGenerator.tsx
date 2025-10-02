@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { generateVideo, pollVideo } from '../services/geminiService';
 import { Spinner } from './Spinner';
@@ -18,22 +19,12 @@ export const VideoGenerator: React.FC = () => {
     const pollIntervalRef = useRef<number | null>(null);
     const messageIntervalRef = useRef<number | null>(null);
 
-    // Effect for cleaning up intervals on unmount
     useEffect(() => {
         return () => {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             if (messageIntervalRef.current) clearInterval(messageIntervalRef.current);
         };
     }, []);
-
-    // Effect for cleaning up blob URLs to prevent memory leaks
-    useEffect(() => {
-        return () => {
-            if (videoUrl && videoUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(videoUrl);
-            }
-        };
-    }, [videoUrl]);
     
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -41,7 +32,7 @@ export const VideoGenerator: React.FC = () => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setUploadedImage({ dataUrl: reader.result as string, file });
-                setVideoUrl(null); // Clear previous generation
+                setVideoUrl(null); 
             };
             reader.readAsDataURL(file);
         }
@@ -53,7 +44,6 @@ export const VideoGenerator: React.FC = () => {
             fileInputRef.current.value = "";
         }
     }
-
 
     const startLoadingMessages = () => {
         let i = 0;
@@ -101,21 +91,9 @@ export const VideoGenerator: React.FC = () => {
                         stopLoadingMessages();
 
                         const uri = operation.response?.generatedVideos?.[0]?.video?.uri;
-                        if (uri && process.env.API_KEY) {
-                            try {
-                                const videoResponse = await fetch(`${uri}&key=${process.env.API_KEY}`);
-                                if (!videoResponse.ok) {
-                                    throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
-                                }
-                                const videoBlob = await videoResponse.blob();
-                                const objectURL = URL.createObjectURL(videoBlob);
-                                setVideoUrl(objectURL);
-                                setLoadingState('done');
-                            } catch (fetchError: any) {
-                                console.error('Video fetch error:', fetchError);
-                                setError(fetchError.message || 'Failed to download generated video.');
-                                setLoadingState('error');
-                            }
+                        if (uri) {
+                            setVideoUrl(uri);
+                            setLoadingState('done');
                         } else {
                            const errorMessage = operation.error?.message || 'Video generation finished but no video URI was found.';
                            setError(errorMessage);

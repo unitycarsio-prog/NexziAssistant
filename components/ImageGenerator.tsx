@@ -52,7 +52,8 @@ export const ImageGenerator: React.FC = () => {
       }
     } catch (e) {
       console.error('Error generating image:', e);
-      setError('Failed to generate image. Please try again.');
+      const err = e as Error;
+      setError(err.message || 'Failed to generate image. Please try again.');
     } finally {
       setIsLoading(false);
     }

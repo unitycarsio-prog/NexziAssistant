@@ -1,7 +1,7 @@
 
 import React from 'react';
 import type { AppMode } from '../types';
-import { ChatIcon, ImageIcon, MicIcon } from './icons/Icons';
+import { ChatIcon, ImageIcon, MicIcon, VideoIcon } from './icons/Icons';
 
 interface HeaderProps {
   activeMode: AppMode;
@@ -12,6 +12,7 @@ export const Header: React.FC<HeaderProps> = ({ activeMode, setActiveMode }) => 
   const navItems: { mode: AppMode; label: string; icon: React.ReactElement }[] = [
     { mode: 'chat', label: 'Chat', icon: <ChatIcon /> },
     { mode: 'image', label: 'Image Gen', icon: <ImageIcon /> },
+    { mode: 'video', label: 'Video Gen', icon: <VideoIcon /> },
     { mode: 'talk', label: 'Talk Mode', icon: <MicIcon /> },
   ];
 
@@ -19,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ activeMode, setActiveMode }) => 
     <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">NexziAssistant</h1>
-        <nav className="flex items-center space-x-2 sm:space-x-4">
+        <nav className="flex items-center space-x-1 sm:space-x-2">
           {navItems.map(({ mode, label, icon }) => (
             <button
               key={mode}

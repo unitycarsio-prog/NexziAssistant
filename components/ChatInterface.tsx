@@ -5,7 +5,6 @@ import type { Message, MessagePart } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { Spinner } from './Spinner';
 import { SendIcon, UserIcon, BotIcon } from './icons/Icons';
-import type { GenerateContentResponse } from '@google/genai';
 
 const parseResponse = (text: string): MessagePart[] => {
     const parts: MessagePart[] = [];
@@ -50,21 +49,23 @@ export const ChatInterface: React.FC = () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', parts: [{ text: input }] };
+    const history = [...messages];
+    
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
-      const response: GenerateContentResponse = await generateText(input);
-      const modelText = response.text;
+      const modelText = await generateText(input, history);
       const modelParts = parseResponse(modelText);
       const modelMessage: Message = { role: 'model', parts: modelParts };
       setMessages(prev => [...prev, modelMessage]);
     } catch (error) {
       console.error('Error generating text:', error);
+      const err = error as Error;
       const errorMessage: Message = {
         role: 'model',
-        parts: [{ text: 'Sorry, I encountered an error. Please try again.' }],
+        parts: [{ text: `Sorry, an error occurred: ${err.message}` }],
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
