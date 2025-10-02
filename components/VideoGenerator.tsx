@@ -102,7 +102,11 @@ export const VideoGenerator: React.FC = () => {
                     }
                 } catch (pollError: any) {
                     console.error('Polling error:', pollError);
-                    setError(pollError.message || 'An error occurred while checking video status.');
+                    let friendlyMessage = pollError.message || 'An error occurred while checking video status.';
+                    if (pollError.message.includes('API key not valid')) {
+                        friendlyMessage = "The API key provided is not valid. Please check the `API_KEY` environment variable in your Vercel project settings and ensure it's a correct key from Google AI Studio.";
+                    }
+                    setError(friendlyMessage);
                     setLoadingState('error');
                     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                     stopLoadingMessages();
@@ -111,7 +115,11 @@ export const VideoGenerator: React.FC = () => {
 
         } catch (e: any) {
             console.error('Error generating video:', e);
-            setError(e.message || 'Failed to start video generation. Please try again.');
+            let friendlyMessage = e.message || 'Failed to start video generation. Please try again.';
+            if (e.message.includes('API key not valid')) {
+                friendlyMessage = "The API key provided is not valid. Please check the `API_KEY` environment variable in your Vercel project settings and ensure it's a correct key from Google AI Studio.";
+            }
+            setError(friendlyMessage);
             setLoadingState('error');
             stopLoadingMessages();
         }

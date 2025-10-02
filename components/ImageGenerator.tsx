@@ -53,7 +53,11 @@ export const ImageGenerator: React.FC = () => {
     } catch (e) {
       console.error('Error generating image:', e);
       const err = e as Error;
-      setError(err.message || 'Failed to generate image. Please try again.');
+      let friendlyMessage = err.message || 'Failed to generate image. Please try again.';
+      if (err.message.includes('API key not valid')) {
+        friendlyMessage = "The API key provided is not valid. Please check the `API_KEY` environment variable in your Vercel project settings and ensure it's a correct key from Google AI Studio.";
+      }
+      setError(friendlyMessage);
     } finally {
       setIsLoading(false);
     }

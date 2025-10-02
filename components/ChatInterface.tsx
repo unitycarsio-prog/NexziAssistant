@@ -63,9 +63,13 @@ export const ChatInterface: React.FC = () => {
     } catch (error) {
       console.error('Error generating text:', error);
       const err = error as Error;
+      let friendlyMessage = `Sorry, an error occurred: ${err.message}`;
+      if (err.message.includes('API key not valid')) {
+        friendlyMessage = "The API key provided is not valid. Please check the `API_KEY` environment variable in your Vercel project settings and ensure it's a correct key from Google AI Studio.";
+      }
       const errorMessage: Message = {
         role: 'model',
-        parts: [{ text: `Sorry, an error occurred: ${err.message}` }],
+        parts: [{ text: friendlyMessage }],
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
